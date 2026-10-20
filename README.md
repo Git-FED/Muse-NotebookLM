@@ -23,6 +23,9 @@ isolation:
 | CLI | `muse_nlm/cli.py` | parse arguments, format output, own the exit code |
 | Session | `muse_nlm/session.py` | store and report the one-time login state |
 | Fetch | `muse_nlm/fetch.py` | perform the HTTP request with an explicit timeout |
+| Wiz | `muse_nlm/wiz.py` | parse NotebookLM bootstrap tokens from HTML |
+| RPC | `muse_nlm/rpc.py` | build batchexecute requests and parse RPC responses |
+| Notebooks | `muse_nlm/notebooks.py` | list notebooks, decode sources, fetch source full text |
 | Extract | `muse_nlm/extract.py` | convert HTML into clean plain text |
 
 Nothing above the fetch layer touches the network, which is what makes the
@@ -66,6 +69,27 @@ nlm open --file tests/fixtures/notebook.html   # parse a local file, no network
 
 The `--file` form exists so you can parse a saved page (or a fixture) without
 touching the network. It is also how the extractor is tested.
+
+### `nlm list`
+
+Lists your notebooks, most recently viewed first. Requires a stored session
+(see `nlm login`).
+
+```sh
+$ nlm list
+Research Notebook    nb-42    12 sources
+Reading List         nb-77     3 sources
+```
+
+### `nlm notebook <id>`
+
+Shows one notebook's title and every source in it, with each source's type
+(PDF, web page, YouTube, pasted text, and more) and readiness status.
+
+### `nlm source <notebook-id> <source-id>`
+
+Prints one source's full text — the actual content of the PDF, page, or
+document, extracted from the notebook's data — ready to pipe anywhere.
 
 ### `nlm login`
 
@@ -126,15 +150,17 @@ This has two consequences you should understand before relying on the tool:
 1. **Logged out**, `nlm open` will fetch the app shell and find no readable
    content. The CLI reports this explicitly and exits non-zero rather than
    printing navigation chrome and pretending it worked.
-2. **Logged in**, a plain `GET` still returns the shell unless the fetch layer
-   is replaying the RPC calls. If you only see the shell after logging in, that
-   is why: the cookie alone is not sufficient for a static fetch to see the
-   notes.
+2. **Logged in**, a plain `GET` still returns the shell — the cookie alone is
+   not sufficient for a static fetch to see the notes. That is why the read
+   commands (`list`, `notebook`, `source`, and `open` on a notebook URL)
+   replay the same `batchexecute` RPC calls the web app makes. As of v0.2.0
+   that replay is built and tested: list notebooks (`wXbhsf`), notebook +
+   sources (`rLM1Ne`), and source full text (`hizoJc`). Asking questions
+   (chat) is not implemented yet.
 
-In other words, the session setup turns on the *authenticated* path, but the
-full read depends on the fetch strategy actually retrieving the content that the
-SPA loads client-side. The `--file` mode lets you verify the extraction half
-against a page you saved from a logged-in tab, independent of that question.
+In other words: no session, no notebook content — by design, not by bug.
+The `--file` mode still lets you verify the extraction half against a page
+you saved from a logged-in tab, independent of the session.
 
 ## Exit codes
 
@@ -170,6 +196,11 @@ The test suite is deliberately offline:
   `notebook.html` (a saved page with real content).
 - `tests/test_fetch.py` monkeypatches `urllib.request.urlopen` to exercise the
   timeout, HTTP-error, and connection-error branches without a network.
+- `tests/test_rpc.py` locks in the batchexecute wire format: the request
+  envelope, the session-token key, and response decoding (including the
+  rejection envelope Google returns for bad or missing notebooks).
+- `tests/test_notebooks.py` decodes captured-shape notebook and source rows:
+  titles, source types, readiness status, and full-text extraction.
 
 To add a new extractor case, drop an HTML file in `tests/fixtures/` and assert
 against it. Because the extractor is pure, fixtures are the cheapest and most
@@ -177,31 +208,40 @@ reliable way to lock in behaviour.
 
 ## File layout
 
-```
-muse-nlm
-├── README.md
+```text
+Muse-NotebookLM
 ├── LICENSE
-├── .gitignore
-├── pyproject.toml            # pytest config + metadata, no install
-├── manifest.json             # workspace harness metadata
+├── README.md
+├── index.html                # public landing page with favicon and promo images
+├── private-communities.html  # client-side age/residence self-check for Matrix invite
+├── assets
+│   ├── favicon.svg
+│   ├── promo-library-chaos.png
+│   └── promo-shell-goblin.png
+├── manifest.json
+├── pyproject.toml
 ├── bin
-│   └── nlm                   # executable shim (fixes sys.path)
+│   └── nlm
 ├── muse_nlm
-│   ├── __init__.py           # __version__
-│   ├── __main__.py           # python -m muse_nlm
-│   ├── cli.py                # argparse + exit codes
-│   ├── session.py            # login/status/storage
-│   ├── fetch.py              # urllib with explicit timeout
-│   └── extract.py            # HTML -> plain text
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── cli.py
+│   ├── extract.py
+│   ├── fetch.py
+│   ├── notebooks.py
+│   ├── rpc.py
+│   ├── session.py
+│   └── wiz.py
 └── tests
-    ├── conftest.py           # fixtures path helper
-    ├── fixtures
-    │   ├── shell.html
-    │   └── notebook.html
+    ├── conftest.py
     ├── test_extract.py
-    └── test_fetch.py
+    ├── test_fetch.py
+    ├── test_notebooks.py
+    ├── test_rpc.py
+    └── fixtures
+        ├── notebook.html
+        └── shell.html
 ```
-
 ## License
 
 MIT. See `LICENSE`.

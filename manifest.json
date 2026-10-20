@@ -1,6 +1,6 @@
 {
   "name": "muse-nlm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fetch NotebookLM links and print readable content as plain text.",
   "entrypoint": "bin/nlm",
   "runtime": {
@@ -12,6 +12,10 @@
     "open": "nlm open <url>",
     "login": "nlm login",
     "logout": "nlm logout",
-    "status": "nlm status"
-  }
+    "status": "nlm status",
+    "list": "nlm list \u2014 list the signed-in account's notebooks (most recently viewed first)",
+    "notebook": "nlm notebook <id> \u2014 show a notebook's title and its sources",
+    "source": "nlm source <notebook_id> <source_id> \u2014 print one source's full text"
+  },
+  "status": "v0.2.0 \u2014 public-page reading live; signed-in notebook reading (list / notebook / source / open on notebook URLs) via batchexecute RPC replay, activates with the one-time session setup"
 }

@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf8f0">
+  <meta name="description" content="muse-nlm turns readable NotebookLM page content into plain text you can pipe anywhere. Tiny, dependency-free, and delightfully no-nonsense.">
+  <title>muse-nlm — notes out, plain text in</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172338;
+      --muted: #5d6877;
+      --paper: #fbf8f0;
+      --card: #fffefa;
+      --blue: #315ff4;
+      --yellow: #ffd45a;
+      --line: #e8e2d5;
+      --radius: 22px;
+      font-family: ui-rounded, "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    a { color: inherit; }
+    [hidden] { display: none !important; }
+    .wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 850; font-size: 1.12rem; text-decoration: none; letter-spacing: -.04em; }
+    .brand img { width: 34px; height: 34px; }
+    nav { display: flex; gap: 22px; align-items: center; font-size: .92rem; font-weight: 650; }
+    nav a { text-decoration: none; }
+    nav a:hover { color: var(--blue); }
+    .hero { padding: 70px 0 64px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--blue); font-weight: 800; font-size: .78rem; letter-spacing: .11em; text-transform: uppercase; }
+    .dot { width: 8px; height: 8px; background: var(--yellow); border-radius: 50%; }
+    h1 { margin: 18px 0 20px; max-width: 650px; font-size: clamp(3.2rem, 7vw, 5.9rem); line-height: .94; letter-spacing: -.075em; }
+    h1 span { color: var(--blue); }
+    .intro { max-width: 550px; color: var(--muted); font-size: 1.18rem; line-height: 1.65; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 19px; border: 1px solid var(--ink); border-radius: 999px; text-decoration: none; font-size: .94rem; font-weight: 750; transition: transform .15s ease, box-shadow .15s ease; cursor: pointer; }
+    .button:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--ink); }
+    .button.primary { background: var(--ink); color: white; }
+    .button.secondary { background: transparent; }
+    .terminal { border-radius: 19px; padding: 23px; background: #172338; color: #f8f7ef; box-shadow: 12px 13px 0 var(--yellow); transform: rotate(1deg); }
+    .terminal-top { display: flex; align-items: center; gap: 7px; padding-bottom: 21px; color: #aeb9ca; font-size: .78rem; }
+    .traffic { width: 9px; height: 9px; border-radius: 50%; background: #ff7c69; }
+    .traffic:nth-child(2) { background: #ffd45a; }
+    .traffic:nth-child(3) { background: #75d7a3; margin-right: 6px; }
+    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 500 .92rem/1.8 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .prompt { color: #8ca5ff; }
+    .comment { color: #95a3b7; }
+    .features { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 24px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .feature { padding: 4px 12px 4px 0; }
+    .feature b { display: block; margin-bottom: 5px; font-size: 1rem; }
+    .feature span { color: var(--muted); font-size: .91rem; line-height: 1.5; }
+    .promos { padding: 76px 0 72px; }
+    .section-head { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 26px; }
+    .section-head h2 { margin: 0; font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -.06em; }
+    .section-head p { max-width: 440px; margin: 0; color: var(--muted); line-height: 1.6; }
+    .promo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+    .promo-card { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+    .promo-card img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: #f0eadc; }
+    .caption { padding: 19px 22px 22px; }
+    .caption .tag { color: var(--blue); font-size: .73rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+    .caption h3 { margin: 8px 0 6px; font-size: 1.27rem; letter-spacing: -.035em; }
+    .caption p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.55; }
+    .support { border-top: 1px solid var(--line); padding: 76px 0 84px; }
+    .support-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; align-items: stretch; }
+    .support-card { min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+    .support-card h3 { margin: 0 0 8px; font-size: 1.3rem; letter-spacing: -.035em; }
+    .support-card > p { margin: 0 0 18px; color: var(--muted); line-height: 1.55; }
+    .provider-slot { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+    .provider-slot + .provider-slot { margin-top: 16px; }
+    .provider-label { flex: 0 0 100%; color: var(--muted); font-size: .82rem; font-weight: 750; }
+    .provider-button { display: inline-block; max-width: 100%; min-height: 34px; }
+    .provider-button img { max-width: 100%; height: 34px; object-fit: contain; }
+    #paypal-status, #subscribe-message { min-height: 1.4em; margin: 10px 0 0; color: var(--muted); font-size: .88rem; }
+    .fine { margin: 16px 0 0; color: #737d89; font-size: .77rem; line-height: 1.55; }
+    .fine a { text-underline-offset: 2px; }
+    .substack-form { display: flex; flex-direction: column; gap: 10px; }
+    .substack-row { display: flex; gap: 8px; }
+    .substack-row input { flex: 1; min-width: 0; padding: 12px 13px; border: 1px solid #d6d6d6; border-radius: 7px; font: inherit; }
+    .substack-row input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+    .substack-row button { padding: 12px 17px; border: 0; border-radius: 7px; background: #ff6719; color: white; font: inherit; font-weight: 750; cursor: pointer; }
+    .substack-row button:disabled { opacity: .65; cursor: wait; }
+    .msg-error { color: #a52f24 !important; }
+    .msg-success { color: #24753a !important; }
+    .discord-frame { display: block; width: 100%; height: 420px; border: 0; border-radius: 12px; background: #23272a; }
+    .social { border-top: 1px solid var(--line); padding: 58px 0 70px; }
+    .social-links { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .social-link { min-height: 74px; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 15px; background: var(--card); text-decoration: none; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+    .social-link:hover, .social-link:focus-visible { border-color: var(--blue); transform: translateY(-2px); box-shadow: 0 4px 0 var(--yellow); }
+    .social-link strong { font-size: .98rem; }
+    .social-link span { color: var(--muted); font-size: .82rem; }
+    footer { border-top: 1px solid var(--line); padding: 34px 0 24px; color: var(--muted); font-size: .87rem; }
+    .footer-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+    .footer-col h3 { margin: 0 0 12px; color: var(--ink); font-size: .91rem; }
+    .footer-col ul { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+    .footer-col a { text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    .footer-bottom { display: flex; justify-content: space-between; gap: 16px; margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line); font-size: .82rem; }
+
+    .payment-gate { margin-bottom: 20px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius); background: #fffefa; }
+    .payment-gate h3 { margin: 0 0 8px; font-size: 1.2rem; letter-spacing: -.03em; }
+    .payment-gate p { max-width: 760px; margin: 8px 0; color: var(--muted); font-size: .93rem; line-height: 1.55; }
+    .payment-gate .age-note { padding: 10px 13px; border-left: 3px solid var(--yellow); border-radius: 0 9px 9px 0; background: var(--paper); font-size: .82rem; }
+    .age-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .age-actions button { font: inherit; }
+    .age-denied { min-height: 1.4em; margin-top: 10px !important; font-size: .84rem !important; }
+    @media (max-width: 760px) {
+      .hero { grid-template-columns: 1fr; gap: 34px; padding: 52px 0 48px; }
+      .terminal { max-width: 560px; }
+      .features { grid-template-columns: 1fr; gap: 16px; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 12px; }
+      .promo-grid, .support-grid { grid-template-columns: 1fr; }
+      .social-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 480px) {
+      .wrap { width: min(100% - 28px, 1080px); }
+      header { padding: 18px 0; }
+      nav { gap: 10px; font-size: .8rem; }
+      .hero { padding-top: 42px; }
+      h1 { font-size: clamp(3rem, 15vw, 4.5rem); }
+      .intro { font-size: 1.05rem; }
+      .terminal { padding: 17px; }
+      pre { font-size: .78rem; }
+      .promos, .support { padding: 58px 0; }
+      .support-card { padding: 19px; }
+      .substack-row { flex-direction: column; }
+      .substack-row button { width: 100%; }
+      .social-links { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 22px; }
+      .footer-bottom { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="site-content">
+    <header>
+      <a class="brand" href="index.html" aria-label="muse-nlm home">
+        <img src="assets/favicon.svg" alt="" width="34" height="34">
+        <span>muse-nlm</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#why">Why muse?</a>
+        <a href="#promos">The fun bits</a>
+        <a href="#support">Subscribe / support</a>
+        <a href="#social">Social links</a>
+        <a href="README.md">Docs</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <div class="eyebrow"><span class="dot" aria-hidden="true"></span> Small tool. Big note energy.</div>
+          <h1 id="hero-title">Notes out.<br><span>Plain text in.</span></h1>
+          <p class="intro">muse-nlm turns readable NotebookLM page content into plain text you can pipe anywhere. No browser automation. No extra packages. Just one tiny tool doing its one tiny job.</p>
+          <div class="actions">
+            <a class="button primary" href="https://www.patreon.com/checkout/16145898/28759937?client_id=yieuxJary8ZL-f8_KU2x6CLgr8nrI8W61ttU1yzFIpPl4KhhtqsjGDWTKdh0e-gx&amp;state=05d4a8d93af762ab4aa99e75678389c6&amp;response_type=code&amp;amt=5.0&amp;pledge_insufficient=True&amp;redirect_uri=https%3A%2F%2Fwww.patreon.com%2Foauth2%2Fbecome-patron%3Fredirect_uri%3Dhttps%253A%252F%252Fgithub.com%252Fsponsors%252Faccounts%252Fpatreon%26client_id%3DyieuxJary8ZL-f8_KU2x6CLgr8nrI8W61ttU1yzFIpPl4KhhtqsjGDWTKdh0e-gx%26min_cents%3D500%26campaign_id%3D16145898%26response_type%3Dcode%26state%3D05d4a8d93af762ab4aa99e75678389c6%26scope%3Didentity%2Bidentity%255Bemail%255D%2Bcampaigns%2Bw%253Acampaigns.webhook%2Bcampaigns.members&amp;start_flow=become_patron&amp;scope=identity+identity%5Bemail%5D+campaigns+w%3Acampaigns.webhook+campaigns.members" target="_blank" rel="noopener noreferrer">Subscribe on Patreon · $5</a>
+            <a class="button secondary" href="README.md">Read the docs</a>
+            <a class="button secondary" href="#promos">Meet the paper pile</a>
+          </div>
+        </div>
+        <div class="terminal" aria-label="Example terminal command">
+          <div class="terminal-top"><span class="traffic"></span><span class="traffic"></span><span class="traffic"></span> your very normal terminal</div>
+          <pre><span class="comment"># retrieve readable page text</span>
+<span class="prompt">$</span> nlm open https://notebooklm.google.com/notebook/&lt;id&gt;
+
+<span class="comment"># and send it wherever you like</span>
+<span class="prompt">$</span> nlm open &lt;url&gt; | grep "important bit"</pre>
+        </div>
+      </section>
+
+      <section class="features" id="why" aria-label="Project highlights">
+        <div class="feature"><b>Just the essentials</b><span>Python standard library only. No dependency parade.</span></div>
+        <div class="feature"><b>Pipe-friendly</b><span>Readable content comes out as plain text, ready for the next step.</span></div>
+        <div class="feature"><b>Honest about limits</b><span>NotebookLM is a client-rendered app; an app shell alone is not readable content.</span></div>
+      </section>
+
+      <section class="promos" id="promos" aria-labelledby="promo-title">
+        <div class="section-head">
+          <h2 id="promo-title">A little less<br>paper panic.</h2>
+          <p>Two tiny visual reminders that you can let the tool do the tedious bit while you get back to the important bit.</p>
+        </div>
+        <div class="promo-grid">
+          <article class="promo-card">
+            <img src="assets/promo-library-chaos.png" alt="A cartoon librarian buried under a pile of tangled notes while a tiny terminal robot sorts them into a neat stack." width="1200" height="800">
+            <div class="caption"><span class="tag">Problem / solution</span><h3>From note avalanche to neat stack</h3><p>For when your reading pile has started developing its own weather system.</p></div>
+          </article>
+          <article class="promo-card">
+            <img src="assets/promo-shell-goblin.png" alt="A silly browser-shell goblin hides a notebook page while a tiny terminal uses a magnifying glass to find readable text." width="1200" height="800">
+            <div class="caption"><span class="tag">The honest explanation</span><h3>There’s a page in there somewhere</h3><p>The app shell is just the curtain. muse-nlm is here for the readable content behind it.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="support" id="support" aria-labelledby="support-title">
+        <div class="section-head">
+          <h2 id="support-title">Subscribe &amp;<br>support.</h2>
+          <p>Choose a way to follow or support the project. The payment and signup widgets below are provided by their respective services.</p>
+        </div>
+        <div class="payment-area">
+          <div class="payment-gate" id="payment-age-confirmation" aria-labelledby="payment-gate-title" aria-describedby="payment-gate-description">
+            <h3 id="payment-gate-title">Age confirmation for payment options</h3>
+            <p id="payment-gate-description">To view subscription and donation buttons, confirm that you are at least 18, or the age of majority where you live if it is higher. The rest of this page remains available without confirming.</p>
+            <p class="age-note">This is a self-attestation only. It does not verify your identity or independently enforce age restrictions.</p>
+            <div class="age-actions">
+              <button class="button primary" id="payment-confirm" type="button">I meet the age requirement</button>
+              <button class="button secondary" id="payment-not-now" type="button">Keep payment links hidden</button>
+            </div>
+            <p class="age-denied" id="payment-gate-message" role="status" aria-live="polite"></p>
+          </div>
+          <div class="support-grid" id="payment-options" hidden inert>
+          <article class="support-card">
+            <h3>Subscriptions</h3>
+            <p>Use PayPal or Stripe to subscribe. Review the price, renewal schedule, and terms shown by the provider before approving a subscription.</p>
+            <div class="provider-slot">
+              <span class="provider-label">PayPal subscription</span>
+              <div id="paypal-button-container-P-4FD24238VX4902214NK2XP2Y"></div>
+            </div>
+            <p id="paypal-status" role="status" aria-live="polite"></p>
+            <div class="provider-slot">
+              <span class="provider-label">Stripe subscription</span>
+              <div id="stripe-button-container"><span class="fine">Stripe’s secure checkout button loads after age confirmation.</span></div>
+            </div>
+            <p class="fine">Checkout, billing, cancellations, and payment details are handled by the selected provider. Confirm their displayed terms before proceeding.</p>
+          </article>
+
+          <article class="support-card">
+            <h3>Other ways to support</h3>
+            <p>Use a provider you already know, or choose cryptocurrency payment if that works better for you.</p>
+            <div class="provider-slot">
+              <span class="provider-label">GitHub Sponsors</span>
+              <iframe id="github-sponsor-frame" title="Sponsor Git-FED on GitHub" width="114" height="32" style="border:0;border-radius:6px" loading="lazy" data-src="https://github.com/sponsors/Git-FED/button"></iframe>
+            </div>
+            <div class="provider-slot">
+              <span class="provider-label">Buy me a book</span>
+              <a class="provider-button" href="https://www.buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer" aria-label="Buy FedPromptly a book on Buy Me a Coffee">
+                <img id="coffee-button-image" alt="Buy me a book on Buy Me a Coffee" width="220" height="34" data-src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20book&emoji=%F0%9F%93%96&slug=fedpromptly&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff">
+              </a>
+            </div>
+            <div class="provider-slot">
+              <span class="provider-label">Cryptocurrency</span>
+              <a class="provider-button" href="https://nowpayments.io/payment/?iid=5997958570&amp;source=button" target="_blank" rel="noopener noreferrer" aria-label="Pay with cryptocurrency via NOWPayments">
+                <img id="nowpayments-button-image" alt="Cryptocurrency and Bitcoin payment button by NOWPayments" width="220" height="42" data-src="https://nowpayments.io/images/embeds/payments-button-white.svg">
+              </a>
+            </div>
+            <div class="provider-slot">
+              <span class="provider-label">Ko-fi</span>
+              <div id="kofi-widget-placeholder"></div>
+            </div>
+          </article>
+          </div>
+        </div>
+
+        <div class="support-grid">
+          <article class="support-card">
+            <h3>Subscribe to GitFed by email</h3>
+            <p>Get updates from the GitFed publication. Your email is sent to Substack when you submit the form.</p>
+            <form class="substack-form" id="substack-form" novalidate>
+              <div class="substack-row">
+                <input id="subscriber-email" name="email" type="email" placeholder="Your email address" autocomplete="email" required aria-label="Email address">
+                <button id="substack-submit" type="submit">Subscribe</button>
+              </div>
+              <p class="fine">By subscribing, you agree to Substack’s <a href="https://substack.com/tos" target="_blank" rel="noopener noreferrer">Terms of Use</a>, <a href="https://substack.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>, and <a href="https://substack.com/ccpa" target="_blank" rel="noopener noreferrer">Information Collection Notice</a>.</p>
+              <p id="subscribe-message" role="status" aria-live="polite"></p>
+            </form>
+          </article>
+
+          <article class="support-card">
+            <h3>Join the Discord</h3>
+            <p>Visit the community server. Discord’s widget is loaded only after age confirmation.</p>
+            <iframe class="discord-frame" id="discord-frame" title="GitFed Discord community" loading="lazy" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts" src="https://discord.com/widget?id=1400235929154879490&amp;theme=dark"></iframe>
+          </article>
+        </div>
+        <p class="fine">Third-party services have their own terms, privacy policies, billing rules, and eligibility requirements. Please review them before sharing information or making a payment.</p>
+      </section>
+
+      <section class="social" id="social" aria-labelledby="social-title">
+        <div class="section-head">
+          <h2 id="social-title">Find FedPromptly</h2>
+          <p>Follow, connect, and find the project on your preferred platforms.</p>
+        </div>
+        <div class="social-links" aria-label="FedPromptly social and community links">
+          <a class="social-link" href="https://www.fedpromptly.com/nsfw"><strong>NSFW</strong><span>Adult content · age-restricted</span></a>
+          <a class="social-link" href="https://www.fedpromptly.com/discord"><strong>Discord</strong><span>Community chat</span></a>
+          <a class="social-link" href="https://www.fedpromptly.com/kofi"><strong>Ko-fi</strong><span>Support the creator</span></a>
+          <a class="social-link" href="https://www.fedpromptly.com/bluesky"><strong>Bluesky</strong><span>Social updates</span></a>
+          <a class="social-link" href="https://www.fedpromptly.com/jabburr"><strong>Jabburr</strong><span>Social updates</span></a>
+          <a class="social-link" href="https://www.fedpromptly.com/github"><strong>GitHub</strong><span>Code and projects</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer aria-label="FED-OS footer">
+      <div class="footer-grid">
+        <section class="footer-col" aria-labelledby="footer-explore">
+          <h3 id="footer-explore">Explore FED-OS</h3>
+          <ul>
+            <li><a href="https://www.fedpromptly.org" target="_blank" rel="noopener noreferrer">Explore the Ecosystem</a></li>
+            <li><a href="https://www.fedpromptly.com/aid" target="_blank" rel="noopener noreferrer">Join FED-OS Membership</a></li>
+            <li><a href="https://www.jabburr.com/fed-os" target="_blank" rel="noopener noreferrer">Storefront</a></li>
+            <li><a href="https://whop.com/fedpromptly/" target="_blank" rel="noopener noreferrer">Whop</a></li>
+          </ul>
+        </section>
+        <section class="footer-col" aria-labelledby="footer-contact">
+          <h3 id="footer-contact">Contact</h3>
+          <ul>
+            <li><a href="mailto:contact@fedpromptly.com">General: contact@fedpromptly.com</a></li>
+            <li><a href="mailto:support@fedpromptly.com">Support: support@fedpromptly.com</a></li>
+            <li><a href="mailto:business@fedpromptly.com">Business: business@fedpromptly.com</a></li>
+          </ul>
+        </section>
+        <section class="footer-col" aria-labelledby="footer-media">
+          <h3 id="footer-media">Support &amp; Media</h3>
+          <ul>
+            <li><a href="https://www.patreon.com/c/FEDpromptly" target="_blank" rel="noopener noreferrer">Supporters on Patreon</a></li>
+            <li><a href="https://buymeacoffee.com/fedpromptly" target="_blank" rel="noopener noreferrer">Tips / Donations</a></li>
+            <li><a href="https://substack.com/@fedpromptly" target="_blank" rel="noopener noreferrer">Articles</a></li>
+            <li><a href="https://fedpromptly.wordpress.com/" target="_blank" rel="noopener noreferrer">Blog Post</a></li>
+            <li><a href="https://gitfed.substack.com/" target="_blank" rel="noopener noreferrer">GitFed Blog</a></li>
+            <li><a href="https://www.deviantart.com/fedpromptly" target="_blank" rel="noopener noreferrer">Artwork</a></li>
+          </ul>
+        </section>
+        <section class="footer-col" aria-labelledby="footer-community">
+          <h3 id="footer-community">Community &amp; Social</h3>
+          <ul>
+            <li><a href="https://discord.gg/Jm4XStx4Pf" target="_blank" rel="noopener noreferrer">Developers on Discord</a></li>
+            <li><a href="https://bsky.app/profile/fed-os.bsky.social" target="_blank" rel="noopener noreferrer">Bluesky</a></li>
+            <li><a href="https://x.com/Fedpromptly" target="_blank" rel="noopener noreferrer">Advertisement / X</a></li>
+            <li><a href="private-communities.html">Private Communities (18+ / eligible locations)</a></li>
+          </ul>
+        </section>
+      </div>
+      <div class="footer-bottom">
+        <span>muse-nlm · tiny, dependency-free, and focused.</span>
+        <span><a href="README.md">Read the project README</a></span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const paymentGate = document.getElementById('payment-age-confirmation');
+      const paymentOptions = document.getElementById('payment-options');
+      const paymentConfirmButton = document.getElementById('payment-confirm');
+      const paymentNotNowButton = document.getElementById('payment-not-now');
+      const paymentGateMessage = document.getElementById('payment-gate-message');
+      let paymentEmbedsStarted = false;
+
+      function loadScript(src, onload, onerror) {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        if (onload) script.onload = onload;
+        if (onerror) script.onerror = onerror;
+        document.body.appendChild(script);
+        return script;
+      }
+
+      function initializeSubstackForm() {
+        const form = document.getElementById('substack-form');
+        const input = document.getElementById('subscriber-email');
+        const button = document.getElementById('substack-submit');
+        const message = document.getElementById('subscribe-message');
+        const publication = 'gitfed';
+        const endpoint = `https://${publication}.substack.com/api/v1/free?nojs=true`;
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          message.textContent = '';
+          message.className = '';
+          const email = input.value.trim();
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            message.textContent = 'Please enter a valid email address.';
+            message.classList.add('msg-error');
+            input.focus();
+            return;
+          }
+          const originalText = button.textContent;
+          button.disabled = true;
+          button.textContent = 'Subscribing…';
+          try {
+            const body = new URLSearchParams({ email, source: 'embed' });
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: body.toString()
+            });
+            let data = {};
+            try { data = await response.json(); } catch (_) {}
+            if (!response.ok) {
+              throw new Error((data && (data.error || data.message)) || 'Something went wrong. Please try again.');
+            }
+            form.reset();
+            message.textContent = data && data.requires_confirmation
+              ? 'Almost there — check your inbox to confirm.'
+              : 'You’re subscribed. Welcome aboard!';
+            message.classList.add('msg-success');
+          } catch (error) {
+            if (error instanceof TypeError) {
+              message.textContent = 'Opening the GitFed subscribe page…';
+              message.classList.add('msg-error');
+              window.open(`https://${publication}.substack.com/subscribe?email=${encodeURIComponent(email)}`, '_blank', 'noopener');
+            } else {
+              message.textContent = error.message || 'Subscription failed.';
+              message.classList.add('msg-error');
+            }
+          } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+          }
+        });
+      }
+
+      function initializePaymentEmbeds() {
+        if (paymentEmbedsStarted) return;
+        paymentEmbedsStarted = true;
+
+        paymentOptions.querySelectorAll('[data-src]').forEach((element) => {
+          element.src = element.dataset.src;
+          element.removeAttribute('data-src');
+        });
+
+        const paypalStatus = document.getElementById('paypal-status');
+        loadScript(
+          'https://www.paypal.com/sdk/js?client-id=BAA_ndqaWMyQwTnDZ0LXwLQ22jdJo9uxkeXYqmBbF-hD41HMiZ83mvOcx1Kti0b6ZfXfje7Q1ievNaS8Ok&vault=true&intent=subscription',
+          () => {
+            if (!window.paypal) {
+              paypalStatus.textContent = 'PayPal could not be loaded. Please try again later.';
+              return;
+            }
+            window.paypal.Buttons({
+              style: { shape: 'rect', color: 'gold', layout: 'vertical', label: 'subscribe' },
+              createSubscription: (data, actions) => actions.subscription.create({
+                plan_id: 'P-4FD24238VX4902214NK2XP2Y',
+                quantity: 1
+              }),
+              onApprove: (data) => {
+                paypalStatus.textContent = `Thanks for subscribing. Reference: ${data.subscriptionID}`;
+              },
+              onError: () => {
+                paypalStatus.textContent = 'PayPal could not complete the request. Please try again later.';
+              }
+            }).render('#paypal-button-container-P-4FD24238VX4902214NK2XP2Y');
+          },
+          () => { paypalStatus.textContent = 'PayPal could not be loaded. Please try again later.'; }
+        );
+
+        loadScript('https://js.stripe.com/v3/buy-button.js', () => {
+          const container = document.getElementById('stripe-button-container');
+          container.replaceChildren();
+          const button = document.createElement('stripe-buy-button');
+          button.setAttribute('buy-button-id', 'buy_btn_1UJKaaJaRf233kfWKZ81fcIe');
+          button.setAttribute('publishable-key', 'pk_live_51UIdAGJaRf233kfWlFacR31IYVGdjCVAttNFzIgQGXQzrUdc894iJcBqamRZNwF11z2AN5kvjyzitor462f2egVI00UmKj0sd8');
+          container.appendChild(button);
+        }, () => {
+          document.getElementById('stripe-button-container').textContent = 'Stripe could not be loaded. Please try again later.';
+        });
+
+        loadScript('https://storage.ko-fi.com/cdn/scripts/overlay-widget.js', () => {
+          if (window.kofiWidgetOverlay) {
+            window.kofiWidgetOverlay.draw('fedpromptly', {
+              type: 'floating-chat',
+              'floating-chat.donateButton.text': 'Support me',
+              'floating-chat.donateButton.background-color': '#00b9fe',
+              'floating-chat.donateButton.text-color': '#fff'
+            });
+          }
+        });
+
+      }
+
+      function unlockPaymentOptions() {
+        sessionStorage.setItem('muse-payment-age-confirmed', 'yes');
+        paymentGate.hidden = true;
+        paymentOptions.hidden = false;
+        paymentOptions.inert = false;
+        initializePaymentEmbeds();
+      }
+
+      paymentConfirmButton.addEventListener('click', unlockPaymentOptions);
+      paymentNotNowButton.addEventListener('click', () => {
+        paymentGateMessage.textContent = 'Payment links remain hidden. You can continue using the rest of the page.';
+      });
+
+      initializeSubstackForm();
+      if (sessionStorage.getItem('muse-payment-age-confirmed') === 'yes') {
+        paymentGate.hidden = true;
+        paymentOptions.hidden = false;
+        paymentOptions.inert = false;
+        initializePaymentEmbeds();
+      }
+    })();
+  </script>
+</body>
+</html>

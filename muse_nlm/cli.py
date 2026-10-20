@@ -13,14 +13,98 @@ import pathlib
 import sys
 from typing import List, Optional
 
-from . import __version__, extract, fetch, session
+from . import __version__, extract, fetch, notebooks, rpc, session
 
 # Below this many characters of extracted text we assume the page was an app
 # shell (or a login wall) rather than real notebook content.
 MIN_CONTENT_CHARS = 40
 
 
+def _client() -> Optional[notebooks.NotebookClient]:
+    sess = session.load()
+    if not sess:
+        print(
+            "nlm: no session stored — run `nlm login` first.",
+            file=sys.stderr,
+        )
+        return None
+    try:
+        return notebooks.NotebookClient(sess["cookie"])
+    except notebooks.NotebookError as exc:
+        print(f"nlm: {exc}", file=sys.stderr)
+        return None
+
+
+def _open_notebook(notebook_id: str) -> int:
+    client = _client()
+    if client is None:
+        return 1
+    try:
+        book = client.get_notebook(notebook_id)
+        print(book.get("title") or notebook_id)
+        for src in book.get("sources", []):
+            print(f"\n===== {src.get('title') or src.get('id')} =====")
+            try:
+                print(client.get_source_text(notebook_id, src["id"]))
+            except (notebooks.NotebookError, rpc.RpcError) as exc:
+                print(f"nlm: could not read source: {exc}", file=sys.stderr)
+    except (notebooks.NotebookError, rpc.RpcError) as exc:
+        print(f"nlm: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def _cmd_list(args: argparse.Namespace) -> int:
+    client = _client()
+    if client is None:
+        return 1
+    try:
+        books = client.list_notebooks()
+    except (notebooks.NotebookError, rpc.RpcError) as exc:
+        print(f"nlm: {exc}", file=sys.stderr)
+        return 1
+    for book in books:
+        print(
+            f"{book.get('title') or '(untitled)'}\t{book.get('id')}"
+            f"\t{book.get('source_count', 0)} sources"
+        )
+    return 0
+
+
+def _cmd_notebook(args: argparse.Namespace) -> int:
+    client = _client()
+    if client is None:
+        return 1
+    try:
+        book = client.get_notebook(args.notebook_id)
+    except (notebooks.NotebookError, rpc.RpcError) as exc:
+        print(f"nlm: {exc}", file=sys.stderr)
+        return 1
+    print(book.get("title") or args.notebook_id)
+    for src in book.get("sources", []):
+        words = src.get("word_count")
+        words_txt = f", {words} words" if isinstance(words, int) else ""
+        print(f"- {src.get('title')} ({src.get('type')}{words_txt}) [{src.get('id')}]")
+    return 0
+
+
+def _cmd_source(args: argparse.Namespace) -> int:
+    client = _client()
+    if client is None:
+        return 1
+    try:
+        print(client.get_source_text(args.notebook_id, args.source_id))
+    except (notebooks.NotebookError, rpc.RpcError) as exc:
+        print(f"nlm: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _cmd_open(args: argparse.Namespace) -> int:
+    if args.url and not args.file:
+        notebook_id = rpc.parse_notebook_id(args.url)
+        if notebook_id and session.load():
+            return _open_notebook(notebook_id)
     if args.file:
         try:
             html = pathlib.Path(args.file).read_text(encoding="utf-8")
@@ -119,6 +203,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_status = sub.add_parser("status", help="show login status")
     p_status.set_defaults(func=_cmd_status)
+
+    p_list = sub.add_parser("list", help="list notebooks (needs a session)")
+    p_list.set_defaults(func=_cmd_list)
+
+    p_notebook = sub.add_parser(
+        "notebook", help="show a notebook's title and sources (needs a session)"
+    )
+    p_notebook.add_argument("notebook_id")
+    p_notebook.set_defaults(func=_cmd_notebook)
+
+    p_source = sub.add_parser(
+        "source", help="print one source's full text (needs a session)"
+    )
+    p_source.add_argument("notebook_id")
+    p_source.add_argument("source_id")
+    p_source.set_defaults(func=_cmd_source)
 
     return parser
 

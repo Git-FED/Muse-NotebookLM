@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="muse-nlm mark">
+  <rect width="64" height="64" rx="18" fill="#315ff4"/>
+  <path d="M13 18.5c7.4-2.4 13.9-1.4 19 2.7v26c-5.1-4.1-11.6-5.1-19-2.7z" fill="#fffefa"/>
+  <path d="M51 18.5c-7.4-2.4-13.9-1.4-19 2.7v26c5.1-4.1 11.6-5.1 19-2.7z" fill="#fffefa"/>
+  <path d="M20 27h6M20 33h7M38 27h6M38 33h7" fill="none" stroke="#315ff4" stroke-linecap="round" stroke-width="2.7"/>
+  <path d="M32 21v26" fill="none" stroke="#ffd45a" stroke-linecap="round" stroke-width="3"/>
+</svg>
