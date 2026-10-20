@@ -1,0 +1,17 @@
+{
+  "name": "muse-nlm",
+  "version": "0.1.0",
+  "description": "Fetch NotebookLM links and print readable content as plain text.",
+  "entrypoint": "bin/nlm",
+  "runtime": {
+    "language": "python",
+    "requires": ">=3.9",
+    "dependencies": []
+  },
+  "commands": {
+    "open": "nlm open <url>",
+    "login": "nlm login",
+    "logout": "nlm logout",
+    "status": "nlm status"
+  }
+}

@@ -1,0 +1,11 @@
+[project]
+name = "muse-nlm"
+version = "0.1.0"
+description = "Fetch NotebookLM links and print readable content as plain text."
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

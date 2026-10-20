@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Executable shim for muse-nlm.
+
+Nothing is installed, so there is no site-packages entry for ``muse_nlm``.
+Running this file from any working directory therefore requires an explicit
+path insert pointing at the repository root before importing the package.
+"""
+
+import os
+import sys
+
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from muse_nlm.cli import main  # noqa: E402
+
+if __name__ == "__main__":
+    raise SystemExit(main())
